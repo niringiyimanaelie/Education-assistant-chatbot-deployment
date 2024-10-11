@@ -20,12 +20,12 @@ openai.api_key = openai_api_key
 client = openai.OpenAI()
 
 ### Get embeddings
-def get_embeddings(text, model="text-embedding-ada-002"):
+def get_embeddings(text, model):
     text = text.replace("\n", " ")
     return client.embeddings.create(input=text, model=model).data[0].embedding
 
 ## Get context
-def get_contexts(query, embed_model='text-embedding-ada-002', k=5):
+def get_contexts(query, embed_model, k):
     query_embeddings = get_embeddings(query, model=embed_model)
     pinecone_response = index.query(vector=query_embeddings, top_k=k, include_metadata=True)
     context = [item['metadata']['text'] for item in pinecone_response['matches']]
@@ -34,12 +34,12 @@ def get_contexts(query, embed_model='text-embedding-ada-002', k=5):
     return context, query
 
 ### Augmented Prompt
-def augmented_query(user_query, embed_model='text-embedding-ada-002', k=5):
+def augmented_query(user_query, embed_model, k=5):
     context, query = get_contexts(user_query, embed_model=embed_model, k=k)
     return "\n\n---\n\n".join(context) + "\n\n---\n\n" + query
 
 ### Ask GPT
-def ask_gpt(system_prompt, user_prompt, model="gpt-3.5-turbo", temp=0.7):
+def ask_gpt(system_prompt, user_prompt, model, temp=0.7):
     temperature_ = temp
     completion = client.chat.completions.create(
         model=model,
@@ -78,7 +78,7 @@ def Education_ChatBot(query):
     Your tone is helpful, supportive, and focused on creating an interactive and effective learning environment.
     """
 
-    llm_model = 'gpt-3.5-turbo'
+    llm_model = 'chatgpt-4o-latest'
     user_prompt = augmented_query(query, embed_model)
     return ask_gpt(primer, user_prompt, model=llm_model)
 
